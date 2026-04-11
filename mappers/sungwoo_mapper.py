@@ -160,10 +160,10 @@ def extract_sungwoo_core(excel_path: str, dedup: bool = True) -> pd.DataFrame:
                 out.append([COMPANY, yi, "GHG_TOTAL", float(s1[yi] + s2[yi]), "t CO2e",
                             "Derived: GHG_SCOPE1 + GHG_SCOPE2", "Page 7 - A"])
 
-    # H&S - Page 10 - B (years as rows)
+    # H&S - Page 10 - B (transposed: years as rows, indicators as columns)
     if "Page 10 - B" in xls.sheet_names:
         df = pd.read_excel(excel_path, sheet_name="Page 10 - B")
-        # first column is year label
+        # first column contains year values
         year_col = df.columns[0]
         for _, r in df.iterrows():
             yi = parse_num(r.get(year_col))
@@ -172,16 +172,16 @@ def extract_sungwoo_core(excel_path: str, dedup: bool = True) -> pd.DataFrame:
             yi = int(yi)
             if yi not in YEARS:
                 continue
-            # columns are the indicators
-            def emit(col_name, code, unit):
+            # nested helper: emit one metric from a column in this row
+            def emit_metric(col_name, code, unit):
                 if col_name in df.columns:
                     val = parse_num(r.get(col_name))
                     if val is not None:
                         out.append([COMPANY, yi, code, val, unit, col_name, "Page 10 - B"])
-            emit("Work injuries with absence [thead]", "HNS_WORK_INJURIES_WITH_ABSENCE", "Number")
-            emit("Missed hours due to injury [thead] ", "HNS_MISSED_HOURS_DUE_TO_INJURY", "Hours")
-            emit("Occupational disease [thead] ", "HNS_OCCUPATIONAL_DISEASE", "Number")
-            emit("Conducted training", "HNS_TRAINING_CONDUCTED", "Number")
+            emit_metric("Work injuries with absence [thead]", "HNS_WORK_INJURIES_WITH_ABSENCE", "Number")
+            emit_metric("Missed hours due to injury [thead] ", "HNS_MISSED_HOURS_DUE_TO_INJURY", "Hours")
+            emit_metric("Occupational disease [thead] ", "HNS_OCCUPATIONAL_DISEASE", "Number")
+            emit_metric("Conducted training", "HNS_TRAINING_CONDUCTED", "Number")
 
     res = pd.DataFrame(out, columns=["Company","Year","MetricCode","Value","UnitRaw","MetricRaw","SourceSheet"])
     if dedup:

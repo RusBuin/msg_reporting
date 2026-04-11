@@ -1,3 +1,11 @@
+# Core data processing
 pandas>=2.0.0
 openpyxl>=3.1.0
+
+# PDF text extraction (basic fallback)
 pypdf>=3.0.0
+
+# LlamaParse: AI-powered PDF table extraction (used for production extraction)
+# Requires a free API key from https://cloud.llamaindex.ai
+llama-parse>=0.4.0
+nest_asyncio>=1.6.0

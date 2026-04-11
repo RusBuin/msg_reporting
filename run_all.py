@@ -4,35 +4,34 @@ run_all.py
 ESG ETL pipeline with two modes:
 
   combine (default)
-    Reads the pre-processed *_core.xlsx files (one per company) and
-    merges them into a single fact_esg_core.csv ready for Power BI.
-    Use this mode when the mapper step has already been completed.
+    Auto-detects all *_core.xlsx files in the current directory, reads them,
+    deduplicates, sorts, and exports to a single fact_esg_core.csv.
 
   extract
-    Runs the raw company mappers against the original structured
-    Excel files (page-named sheets extracted from PDF reports) and
-    then combines the results.  Requires the full source Excel files.
+    Runs the raw company mappers against the original structured Excel files
+    (page-named sheets produced by LlamaParse extraction) and then combines.
+    Requires the full source Excel files.
 
 Usage examples
 --------------
-  # Combine already-processed core files (typical daily use):
+  # Combine already-processed core files (default):
   python run_all.py
 
-  # Same as above, explicit:
+  # Explicit mode:
   python run_all.py --mode combine
 
-  # Run full extraction from source Excel files:
+  # Run full extraction from LlamaParse source Excel files:
   python run_all.py --mode extract
 
-  # Extract only specific companies:
+  # Skip companies:
   python run_all.py --mode extract --skip ILJIN,SKODA
 
-  # Custom input / output paths:
-  python run_all.py --mode combine --out results/fact_esg_core.csv
-  python run_all.py --mode extract --audi data/audi_source.xlsx
+  # Custom output path:
+  python run_all.py --out results/fact_esg_core.csv
 """
 
 import argparse
+import glob
 import os
 import sys
 import pandas as pd
@@ -40,7 +39,7 @@ import pandas as pd
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 # ---------------------------------------------------------------------------
-# Company registry
+# Company registry (used in extract mode)
 # ---------------------------------------------------------------------------
 COMPANIES = {
     "AUDI":    {"core": "audi_core.xlsx",    "source_default": "audi_source.xlsx"},
@@ -53,6 +52,9 @@ COMPANIES = {
 DEFAULT_OUT = os.path.join("ESG_PowerBI", "drop", "fact_esg_core.csv")
 
 
+# ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
 def _pillar(code: str) -> str:
     """Map a MetricCode to an ESG pillar letter (E / S / G)."""
     if code.startswith(("ENERGY_", "GHG_", "WATER_", "WASTE_")):
@@ -63,31 +65,52 @@ def _pillar(code: str) -> str:
     return "G"
 
 
+def read_core_file(path: str) -> pd.DataFrame:
+    """Read a single *_core.xlsx file into a normalised DataFrame."""
+    df = pd.read_excel(path)
+    df["Pillar"] = df["MetricCode"].apply(_pillar)
+    return df
+
+
+def dedup_fact(df: pd.DataFrame) -> pd.DataFrame:
+    """Remove duplicate (Company, Year, MetricCode) rows, keeping the largest value."""
+    if df.empty:
+        return df
+    d = df.copy()
+    d["_abs"] = d["Value"].abs()
+    d["_isnull"] = d["Value"].isna().astype(int)
+    d = d.sort_values(
+        ["Company", "Year", "MetricCode", "_isnull", "_abs"],
+        ascending=[True, True, True, True, False],
+    )
+    d = d.drop_duplicates(subset=["Company", "Year", "MetricCode"], keep="first")
+    return d.drop(columns=["_abs", "_isnull"])
+
+
 # ---------------------------------------------------------------------------
 # Mode 1: combine pre-processed *_core.xlsx files
 # ---------------------------------------------------------------------------
 def run_combine(skip: set, out_path: str) -> pd.DataFrame:
-    """Read *_core.xlsx files and merge into one fact table."""
+    """Auto-detect *_core.xlsx files and merge them into one fact table."""
+    core_files = sorted(glob.glob("*_core.xlsx"))
+    if not core_files:
+        print("  No *_core.xlsx files found in the current directory.")
+        return pd.DataFrame()
+
     frames = []
 
-    for company, cfg in COMPANIES.items():
-        if company in skip:
-            print(f"  [SKIP] {company}")
+    for f in core_files:
+        company_name = os.path.splitext(f)[0].replace("_core", "").upper()
+        if company_name in skip:
+            print(f"  [SKIP] {company_name}")
             continue
-
-        core_path = cfg["core"]
-        if not os.path.isfile(core_path):
-            print(f"  [WARN] {company}: {core_path} not found — skipping")
-            continue
-
-        print(f"  [READ] {company} <- {core_path}")
+        print(f"  [READ] {company_name} <- {f}")
         try:
-            df = pd.read_excel(core_path)
-            df["Pillar"] = df["MetricCode"].apply(_pillar)
+            df = read_core_file(f)
             frames.append(df)
             print(f"         {len(df)} rows")
         except Exception as e:
-            print(f"  [ERROR] {company}: {e}")
+            print(f"  [ERROR] {f}: {e}")
 
     return _save(frames, out_path)
 
@@ -96,7 +119,7 @@ def run_combine(skip: set, out_path: str) -> pd.DataFrame:
 # Mode 2: extract from source Excel files (full mapper run)
 # ---------------------------------------------------------------------------
 def run_extract(source_paths: dict, skip: set, out_path: str) -> pd.DataFrame:
-    """Run company mappers against original structured Excel files."""
+    """Run company mappers against original LlamaParse-structured Excel files."""
     from mappers.audi_mapper import extract_audi_core
     from mappers.hmc_mapper import extract_hmc_core
     from mappers.iljin_mapper import extract_iljin_core
@@ -112,6 +135,7 @@ def run_extract(source_paths: dict, skip: set, out_path: str) -> pd.DataFrame:
     }
 
     frames = []
+
     for company, fn in extractors.items():
         if company in skip:
             print(f"  [SKIP] {company}")
@@ -127,7 +151,7 @@ def run_extract(source_paths: dict, skip: set, out_path: str) -> pd.DataFrame:
             df = fn(path)
             df["Pillar"] = df["MetricCode"].apply(_pillar)
 
-            # Save per-company core file as well
+            # Save per-company core file
             core_out = COMPANIES[company]["core"]
             df.to_excel(core_out, index=False)
             print(f"         {len(df)} rows  |  saved -> {core_out}")
@@ -140,20 +164,23 @@ def run_extract(source_paths: dict, skip: set, out_path: str) -> pd.DataFrame:
 
 
 # ---------------------------------------------------------------------------
-# Shared helper
+# Shared: dedup, sort, export
 # ---------------------------------------------------------------------------
 def _save(frames: list, out_path: str) -> pd.DataFrame:
     if not frames:
-        print("\nNo data extracted. Check that input files exist.")
+        print("\n  No data extracted. Check that input files exist.")
         return pd.DataFrame()
 
-    result = pd.concat(frames, ignore_index=True)
-    result = result.sort_values(["Company", "Year", "MetricCode"]).reset_index(drop=True)
+    fact = pd.concat(frames, ignore_index=True)
+    fact = dedup_fact(fact)
+    fact = fact.sort_values(["Company", "Year", "MetricCode"])
+    fact = fact.reset_index(drop=True)
 
     os.makedirs(os.path.dirname(out_path) or ".", exist_ok=True)
-    result.to_csv(out_path, index=False, encoding="utf-8")
-    print(f"\n  Saved {len(result)} rows -> {out_path}")
-    return result
+    # UTF-8-SIG (BOM) ensures correct encoding when the file is opened in Excel
+    fact.to_csv(out_path, index=False, encoding="utf-8-sig")
+    print(f"\n  Saved {len(fact)} rows -> {out_path}")
+    return fact
 
 
 # ---------------------------------------------------------------------------
@@ -165,7 +192,8 @@ def main():
     )
     parser.add_argument(
         "--mode", choices=["combine", "extract"], default="combine",
-        help="combine: merge *_core.xlsx files (default) | extract: run mappers from source Excel"
+        help="combine: auto-detect *_core.xlsx and merge (default) | "
+             "extract: run mappers from LlamaParse source Excel files",
     )
     parser.add_argument("--out", default=DEFAULT_OUT,
                         help=f"Output CSV path (default: {DEFAULT_OUT})")
