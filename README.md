@@ -1,15 +1,15 @@
 # ESG Analysis & Power BI Report
 
-Дипломна робота: ETL-пайплайн для збору та аналізу ESG-метрик автомобільних компаній з підготовкою даних для Power BI дашборду.
+Bachelor's thesis project: an ETL pipeline for collecting and analysing ESG metrics from automotive company sustainability reports, with a Power BI dashboard as the final output.
 
 ---
 
-## Структура проекту
+## Project Structure
 
 ```
 esg-analysis-powerbi/
 │
-├── mappers/                    # Модулі витягування даних по кожній компанії
+├── mappers/                    # Company-specific metric extractor modules
 │   ├── __init__.py
 │   ├── audi_mapper.py          # AUDI AG
 │   ├── hmc_mapper.py           # Hyundai Motor Company
@@ -17,26 +17,26 @@ esg-analysis-powerbi/
 │   ├── skoda_mapper.py         # ŠKODA Auto
 │   └── sungwoo_mapper.py       # SUNGWOO HITECH
 │
-├── pdfs/                       # Вихідні ESG-звіти у форматі PDF (не у git)
+├── pdfs/                       # Source ESG reports in PDF format (not tracked in git)
 │
 ├── ESG_PowerBI/
 │   └── drop/
-│       ├── fact_esg_core.csv   # Фінальний датасет для Power BI
-│       └── config.csv          # Конфігурація дашборду
+│       ├── fact_esg_core.csv   # Final dataset for Power BI
+│       └── config.csv          # Dashboard configuration
 │
-├── extract_pdf.py              # Витягування тексту з PDF-файлів
-├── read_docx.py                # Витягування тексту з Word-документів
-├── run_all.py                  # Головний ETL-скрипт (запускає всі маппери)
-├── powerquery_fact_template.m  # Power Query шаблон для Power BI
+├── extract_pdf.py              # CLI tool: extract text from PDF files
+├── read_docx.py                # CLI tool: extract text from Word documents
+├── run_all.py                  # Main ETL script (runs all mappers)
+├── powerquery_fact_template.m  # Power Query M template for Power BI
 ├── requirements.txt
 └── README.md
 ```
 
 ---
 
-## Компанії та джерела даних
+## Companies & Data Sources
 
-| Компанія | ESG-звіт | Роки |
+| Company | ESG Report | Years |
 |---|---|---|
 | AUDI AG | Sustainability Report 2024 | 2022–2024 |
 | Hyundai Motor Company (HMC) | Sustainability Report 2025 | 2022–2024 |
@@ -46,86 +46,84 @@ esg-analysis-powerbi/
 
 ---
 
-## Метрики (MetricCode)
+## Metrics (MetricCode)
 
-| Код | Опис | Одиниця |
+| Code | Description | Unit |
 |---|---|---|
-| `ENERGY_TOTAL` | Загальне споживання енергії | MWh |
-| `ENERGY_RENEWABLE` | Споживання відновлюваної енергії | MWh |
-| `GHG_SCOPE1` | Прямі викиди парникових газів | t CO₂e |
-| `GHG_SCOPE2` | Непрямі викиди від споживання енергії | t CO₂e |
-| `GHG_TOTAL` | Загальні викиди (Scope 1 + 2) | t CO₂e |
-| `WATER_TOTAL` | Загальне споживання води | m³ / Ton |
-| `WASTE_TOTAL` | Загальна кількість відходів | t |
-| `WASTE_RECYCLED` | Відходи, що підлягають переробці | t |
-| `EMPLOYEES_TOTAL` | Загальна кількість працівників | чол. |
-| `EMPLOYEES_FEMALE` | Жінки серед працівників | чол. |
-| `EMPLOYEES_MALE` | Чоловіки серед працівників | чол. |
-| `HNS_TRIR` | Частота виробничих травм (TRIR) | — |
+| `ENERGY_TOTAL` | Total energy consumption | MWh |
+| `ENERGY_RENEWABLE` | Energy from renewable sources | MWh |
+| `GHG_SCOPE1` | Direct GHG emissions | t CO₂e |
+| `GHG_SCOPE2` | Indirect GHG emissions (energy) | t CO₂e |
+| `GHG_TOTAL` | Total GHG emissions (Scope 1 + 2) | t CO₂e |
+| `WATER_TOTAL` | Total water consumption | m³ / Ton |
+| `WASTE_TOTAL` | Total waste generated | t |
+| `WASTE_RECYCLED` | Recycled waste | t |
+| `EMPLOYEES_TOTAL` | Total number of employees | persons |
+| `EMPLOYEES_FEMALE` | Female employees | persons |
+| `EMPLOYEES_MALE` | Male employees | persons |
+| `HNS_TRIR` | Total Recordable Incident Rate | — |
 
 ---
 
-## Встановлення та запуск
+## Setup & Usage
 
-### 1. Встановити залежності
+### 1. Install dependencies
 
 ```bash
 pip install -r requirements.txt
 ```
 
-### 2. Запустити ETL-пайплайн
+### 2. Run the ETL pipeline
 
 ```bash
-# Запустити всі маппери (файли *_core.xlsx мають бути в папці проекту):
+# Run all mappers (expects *_core.xlsx files in the project folder):
 python run_all.py
 
-# Або вказати шляхи до файлів вручну:
+# Specify custom file paths:
 python run_all.py --audi path/to/audi.xlsx --hmc path/to/hmc.xlsx
 
-# Пропустити компанії, для яких немає файлів:
+# Skip companies whose Excel files are not available:
 python run_all.py --skip ILJIN,SKODA
 ```
 
-Результат зберігається у `ESG_PowerBI/drop/fact_esg_core.csv`.
+Output is saved to `ESG_PowerBI/drop/fact_esg_core.csv`.
 
-### 3. Витягування тексту з PDF
+### 3. Extract text from PDF
 
 ```bash
 python extract_pdf.py pdfs/audi-report-2024.pdf
 python extract_pdf.py pdfs/hmc-2025-sustainability-report-en.pdf output.txt
 ```
 
-### 4. Підключення до Power BI
+### 4. Connect to Power BI
 
-1. Відкрити Power BI Desktop → **Get Data → Blank Query → Advanced Editor**
-2. Вставити вміст файлу `powerquery_fact_template.m`
-3. Перевірити шлях до `fact_esg_core.csv` у рядку `SourcePath`
-4. **Close & Apply**
-5. Побудувати візуалізації за колонками: `Company`, `Year`, `MetricCode`, `Value`, `Pillar`
+1. Open Power BI Desktop → **Get Data → Blank Query → Advanced Editor**
+2. Paste the contents of `powerquery_fact_template.m`
+3. Update the `SourcePath` variable to point to your `fact_esg_core.csv`
+4. Click **Close & Apply**
+5. Build visuals using columns: `Company`, `Year`, `MetricCode`, `Value`, `Pillar`
 
-Після оновлення датасету достатньо натиснути **Refresh** у Power BI.
+After refreshing the dataset, just click **Refresh** in Power BI to update all visuals.
 
 ---
 
-## Структура вихідного датасету
+## Output Dataset Columns
 
-Файл `fact_esg_core.csv` містить наступні колонки:
-
-| Колонка | Опис |
+| Column | Description |
 |---|---|
-| `Company` | Назва компанії |
-| `Year` | Рік звітності |
-| `MetricCode` | Код метрики |
-| `Value` | Числове значення |
-| `UnitRaw` | Одиниця виміру з вихідного звіту |
-| `MetricRaw` | Оригінальна назва метрики з Excel |
-| `SourceSheet` | Лист Excel, звідки взято дані |
-| `Pillar` | ESG-стовп: E (Environment), S (Social), G (Governance) |
+| `Company` | Company name |
+| `Year` | Reporting year |
+| `MetricCode` | Metric identifier |
+| `Value` | Numeric value |
+| `UnitRaw` | Unit as reported in the source |
+| `MetricRaw` | Original metric label from Excel |
+| `SourceSheet` | Excel sheet the data was taken from |
+| `Pillar` | ESG pillar: E (Environment), S (Social), G (Governance) |
 
 ---
 
-## Технічний стек
+## Tech Stack
 
 - **Python 3.10+** — pandas, openpyxl, pypdf
-- **Microsoft Power BI Desktop** — дашборд та візуалізації
-- **Power Query (M)** — підключення та типізація даних
+- **Microsoft Power BI Desktop** — dashboard and visualisations
+- **Power Query (M)** — data connection and type casting
