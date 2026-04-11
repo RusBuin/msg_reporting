@@ -1,30 +1,35 @@
 """
 run_all.py
 ----------
-Main ETL pipeline: runs all company mappers and combines results
-into a single canonical fact table (fact_esg_core.csv).
+ESG ETL pipeline with two modes:
 
-Usage:
-    python run_all.py [options]
+  combine (default)
+    Reads the pre-processed *_core.xlsx files (one per company) and
+    merges them into a single fact_esg_core.csv ready for Power BI.
+    Use this mode when the mapper step has already been completed.
 
-Options:
-    --audi     PATH   Path to audi Excel file    (default: audi_core.xlsx)
-    --hmc      PATH   Path to HMC Excel file     (default: hmc_core.xlsx)
-    --iljin    PATH   Path to ILJIN Excel file   (default: iljin_core.xlsx)
-    --skoda    PATH   Path to SKODA Excel file   (default: skoda_core.xlsx)
-    --sungwoo  PATH   Path to SUNGWOO Excel file (default: sungwoo_core.xlsx)
-    --out      PATH   Output CSV path            (default: ESG_PowerBI/drop/fact_esg_core.csv)
-    --skip     LIST   Comma-separated companies to skip (e.g. --skip ILJIN,SKODA)
+  extract
+    Runs the raw company mappers against the original structured
+    Excel files (page-named sheets extracted from PDF reports) and
+    then combines the results.  Requires the full source Excel files.
 
-Examples:
-    # Run with default file names (all files in the current folder):
-    python run_all.py
+Usage examples
+--------------
+  # Combine already-processed core files (typical daily use):
+  python run_all.py
 
-    # Run with custom paths:
-    python run_all.py --audi data/audi.xlsx --hmc data/hmc.xlsx
+  # Same as above, explicit:
+  python run_all.py --mode combine
 
-    # Skip companies whose Excel files are not available:
-    python run_all.py --skip ILJIN,SUNGWOO
+  # Run full extraction from source Excel files:
+  python run_all.py --mode extract
+
+  # Extract only specific companies:
+  python run_all.py --mode extract --skip ILJIN,SKODA
+
+  # Custom input / output paths:
+  python run_all.py --mode combine --out results/fact_esg_core.csv
+  python run_all.py --mode extract --audi data/audi_source.xlsx
 """
 
 import argparse
@@ -32,35 +37,22 @@ import os
 import sys
 import pandas as pd
 
-# ---------------------------------------------------------------------------
-# Ensure the mappers/ package is importable regardless of working directory
-# ---------------------------------------------------------------------------
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-
-from mappers.audi_mapper import extract_audi_core
-from mappers.hmc_mapper import extract_hmc_core
-from mappers.iljin_mapper import extract_iljin_core
-from mappers.skoda_mapper import extract_skoda_core
-from mappers.sungwoo_mapper import extract_sungwoo_core
-
 
 # ---------------------------------------------------------------------------
 # Company registry
 # ---------------------------------------------------------------------------
 COMPANIES = {
-    "AUDI":    {"fn": extract_audi_core,    "default": "audi_core.xlsx"},
-    "HMC":     {"fn": extract_hmc_core,     "default": "hmc_core.xlsx"},
-    "ILJIN":   {"fn": extract_iljin_core,   "default": "iljin_core.xlsx"},
-    "SKODA":   {"fn": extract_skoda_core,   "default": "skoda_core.xlsx"},
-    "SUNGWOO": {"fn": extract_sungwoo_core, "default": "sungwoo_core.xlsx"},
+    "AUDI":    {"core": "audi_core.xlsx",    "source_default": "audi_source.xlsx"},
+    "HMC":     {"core": "hmc_core.xlsx",     "source_default": "hmc_source.xlsx"},
+    "ILJIN":   {"core": "iljin_core.xlsx",   "source_default": "iljin_source.xlsx"},
+    "SKODA":   {"core": "skoda_core.xlsx",   "source_default": "skoda_source.xlsx"},
+    "SUNGWOO": {"core": "sungwoo_core.xlsx", "source_default": "sungwoo_source.xlsx"},
 }
 
 DEFAULT_OUT = os.path.join("ESG_PowerBI", "drop", "fact_esg_core.csv")
 
 
-# ---------------------------------------------------------------------------
-# Helpers
-# ---------------------------------------------------------------------------
 def _pillar(code: str) -> str:
     """Map a MetricCode to an ESG pillar letter (E / S / G)."""
     if code.startswith(("ENERGY_", "GHG_", "WATER_", "WASTE_")):
@@ -71,7 +63,11 @@ def _pillar(code: str) -> str:
     return "G"
 
 
-def run_pipeline(paths: dict, skip: set, out_path: str) -> pd.DataFrame:
+# ---------------------------------------------------------------------------
+# Mode 1: combine pre-processed *_core.xlsx files
+# ---------------------------------------------------------------------------
+def run_combine(skip: set, out_path: str) -> pd.DataFrame:
+    """Read *_core.xlsx files and merge into one fact table."""
     frames = []
 
     for company, cfg in COMPANIES.items():
@@ -79,23 +75,76 @@ def run_pipeline(paths: dict, skip: set, out_path: str) -> pd.DataFrame:
             print(f"  [SKIP] {company}")
             continue
 
-        excel_path = paths.get(company, cfg["default"])
-
-        if not os.path.isfile(excel_path):
-            print(f"  [WARN] {company}: file not found -> {excel_path}  (skipping)")
+        core_path = cfg["core"]
+        if not os.path.isfile(core_path):
+            print(f"  [WARN] {company}: {core_path} not found — skipping")
             continue
 
-        print(f"  [RUN]  {company} <- {excel_path}")
+        print(f"  [READ] {company} <- {core_path}")
         try:
-            df = cfg["fn"](excel_path)
+            df = pd.read_excel(core_path)
             df["Pillar"] = df["MetricCode"].apply(_pillar)
             frames.append(df)
-            print(f"         {len(df)} rows extracted")
+            print(f"         {len(df)} rows")
         except Exception as e:
             print(f"  [ERROR] {company}: {e}")
 
+    return _save(frames, out_path)
+
+
+# ---------------------------------------------------------------------------
+# Mode 2: extract from source Excel files (full mapper run)
+# ---------------------------------------------------------------------------
+def run_extract(source_paths: dict, skip: set, out_path: str) -> pd.DataFrame:
+    """Run company mappers against original structured Excel files."""
+    from mappers.audi_mapper import extract_audi_core
+    from mappers.hmc_mapper import extract_hmc_core
+    from mappers.iljin_mapper import extract_iljin_core
+    from mappers.skoda_mapper import extract_skoda_core
+    from mappers.sungwoo_mapper import extract_sungwoo_core
+
+    extractors = {
+        "AUDI":    extract_audi_core,
+        "HMC":     extract_hmc_core,
+        "ILJIN":   extract_iljin_core,
+        "SKODA":   extract_skoda_core,
+        "SUNGWOO": extract_sungwoo_core,
+    }
+
+    frames = []
+    for company, fn in extractors.items():
+        if company in skip:
+            print(f"  [SKIP] {company}")
+            continue
+
+        path = source_paths.get(company, COMPANIES[company]["source_default"])
+        if not os.path.isfile(path):
+            print(f"  [WARN] {company}: source file not found -> {path}  (skipping)")
+            continue
+
+        print(f"  [RUN]  {company} <- {path}")
+        try:
+            df = fn(path)
+            df["Pillar"] = df["MetricCode"].apply(_pillar)
+
+            # Save per-company core file as well
+            core_out = COMPANIES[company]["core"]
+            df.to_excel(core_out, index=False)
+            print(f"         {len(df)} rows  |  saved -> {core_out}")
+
+            frames.append(df)
+        except Exception as e:
+            print(f"  [ERROR] {company}: {e}")
+
+    return _save(frames, out_path)
+
+
+# ---------------------------------------------------------------------------
+# Shared helper
+# ---------------------------------------------------------------------------
+def _save(frames: list, out_path: str) -> pd.DataFrame:
     if not frames:
-        print("\nNo data extracted. Check that Excel files exist.")
+        print("\nNo data extracted. Check that input files exist.")
         return pd.DataFrame()
 
     result = pd.concat(frames, ignore_index=True)
@@ -103,42 +152,50 @@ def run_pipeline(paths: dict, skip: set, out_path: str) -> pd.DataFrame:
 
     os.makedirs(os.path.dirname(out_path) or ".", exist_ok=True)
     result.to_csv(out_path, index=False, encoding="utf-8")
-    print(f"\n✓ Saved {len(result)} rows -> {out_path}")
+    print(f"\n  Saved {len(result)} rows -> {out_path}")
     return result
 
 
 # ---------------------------------------------------------------------------
-# CLI entry point
+# CLI
 # ---------------------------------------------------------------------------
 def main():
     parser = argparse.ArgumentParser(
-        description="ESG ETL pipeline: extract metrics from Excel files and combine into fact_esg_core.csv"
+        description="ESG ETL pipeline: merge company ESG metrics into fact_esg_core.csv"
     )
-    parser.add_argument("--audi",    default=None, help="Path to AUDI Excel file")
-    parser.add_argument("--hmc",     default=None, help="Path to HMC Excel file")
-    parser.add_argument("--iljin",   default=None, help="Path to ILJIN Excel file")
-    parser.add_argument("--skoda",   default=None, help="Path to SKODA Excel file")
-    parser.add_argument("--sungwoo", default=None, help="Path to SUNGWOO Excel file")
-    parser.add_argument("--out",     default=DEFAULT_OUT, help=f"Output CSV path (default: {DEFAULT_OUT})")
-    parser.add_argument("--skip",    default="", help="Comma-separated list of companies to skip")
+    parser.add_argument(
+        "--mode", choices=["combine", "extract"], default="combine",
+        help="combine: merge *_core.xlsx files (default) | extract: run mappers from source Excel"
+    )
+    parser.add_argument("--out", default=DEFAULT_OUT,
+                        help=f"Output CSV path (default: {DEFAULT_OUT})")
+    parser.add_argument("--skip", default="",
+                        help="Comma-separated list of companies to skip (e.g. ILJIN,SKODA)")
+
+    # Source file overrides (used only in extract mode)
+    parser.add_argument("--audi",    default=None, help="[extract] Path to AUDI source Excel")
+    parser.add_argument("--hmc",     default=None, help="[extract] Path to HMC source Excel")
+    parser.add_argument("--iljin",   default=None, help="[extract] Path to ILJIN source Excel")
+    parser.add_argument("--skoda",   default=None, help="[extract] Path to SKODA source Excel")
+    parser.add_argument("--sungwoo", default=None, help="[extract] Path to SUNGWOO source Excel")
+
     args = parser.parse_args()
-
-    # Build paths dict (only override defaults when explicitly provided)
-    paths = {}
-    for company, arg_val in [("AUDI", args.audi), ("HMC", args.hmc),
-                              ("ILJIN", args.iljin), ("SKODA", args.skoda),
-                              ("SUNGWOO", args.sungwoo)]:
-        if arg_val:
-            paths[company] = arg_val
-        else:
-            paths[company] = COMPANIES[company]["default"]
-
     skip = {s.strip().upper() for s in args.skip.split(",") if s.strip()}
 
     print("=" * 60)
-    print("ESG ETL Pipeline")
+    print(f"ESG ETL Pipeline  [mode: {args.mode}]")
     print("=" * 60)
-    run_pipeline(paths, skip, args.out)
+
+    if args.mode == "combine":
+        run_combine(skip, args.out)
+    else:
+        source_paths = {}
+        for company, val in [("AUDI", args.audi), ("HMC", args.hmc),
+                              ("ILJIN", args.iljin), ("SKODA", args.skoda),
+                              ("SUNGWOO", args.sungwoo)]:
+            if val:
+                source_paths[company] = val
+        run_extract(source_paths, skip, args.out)
 
 
 if __name__ == "__main__":
