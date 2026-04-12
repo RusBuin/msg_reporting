@@ -1,21 +1,8 @@
-# iljin_mapper_core.py
-# ILJIN ESG - CORE metric extractor from iljin.xlsx
-#
-# Output columns:
-# Company, Year, MetricCode, Value, UnitRaw, MetricRaw, SourceSheet
-#
-# CORE metrics:
-# - ENERGY_TOTAL (MWh): Energy Usage (Electricity)
-# - WATER_TOTAL (m3): Water usage (Waterworks)
-# - GHG_SCOPE1 (t CO2e): Direct CO2 emissions (Scope 1) (given in million metric tons -> converted)
-# - GHG_SCOPE2 (t CO2e): Indirect CO2 emissions (Scope 2) (million metric tons -> converted)
-# - GHG_TOTAL (t CO2e): Total own CO2 emissions (Scopes 1 and 2) (million metric tons -> converted)
-# - EMPLOYEES_TOTAL / EMPLOYEES_MALE / EMPLOYEES_FEMALE (Number): from Page 69 - F (Employee Type Total; Gender Male/Female)
-#
-# Optional (kept as extra but still canonical if you use them):
-# - SICKNESS_RATIO (Percent): Page 69 - G
-# - FLUCTUATION_RATIO (Percent): Page 69 - H
-# - DRAWDOWN_MALE / DRAWDOWN_FEMALE (Number): Page 69 - I
+# iljin_mapper.py
+# ILJIN Slovakia – ESG metric extractor.
+# Source: iljin_source.xlsx (LlamaParse output, page-named sheets)
+# Years: 2022–2024.
+# Note: GHG values in the source are in million metric tons – converted to tons on extraction.
 
 import re
 import pandas as pd

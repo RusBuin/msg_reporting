@@ -1,27 +1,7 @@
-# hmc_mapper_core_v2.py
-# HMC (Hyundai Motor Company) - CORE metric extractor from hmc.xlsx (v2 aligned to canonical naming)
-#
-# Output columns:
-# Company, Year, MetricCode, Value, UnitRaw, MetricRaw, SourceSheet
-#
-# Canonical metrics extracted:
-# - ENERGY_TOTAL (MWh)               : Page 115 - A -> "Energy Consumption Total"
-# - GHG_SCOPE1 (tCO2-eq)             : Page 115 - B -> "Scope 1"
-# - GHG_SCOPE2 (tCO2-eq)             : Page 115 - B -> "Scope 2"
-# - GHG_SCOPE3 (tCO2-eq)             : Page 115 - B -> "Scope 3"  (note: HMC doesn't split upstream/downstream here)
-# - GHG_TOTAL (tCO2-eq)              : Page 115 - B -> "Sum of Scope 1 and 2" (preferred)
-#   (fallback if missing: derived Scope1+Scope2)
-# - GHG_TOTAL_ALL (tCO2-eq)          : derived Scope1+Scope2+Scope3 (HMC table doesn't have explicit "Total GHG emissions")
-# - WATER_TOTAL (Ton)                : Page 116 - B -> "Water consumption" (exclude intensity)
-# - WASTE_TOTAL (Ton)                : Page 116 - D -> "Total" (exclude intensity)
-# - WASTE_RECYCLED (Ton)             : Page 116 - D -> "Amount of waste recycling"
-# - EMPLOYEES_TOTAL / FEMALE / MALE  : Page 119 - A (employee section, not executives)
-# - HNS_TRIR                          : Page 124 - A -> "Employee TRIR"
-#
-# Policy:
-# - Extract years 2022-2024 only.
-# - Exclude intensity/specific metrics (per vehicle).
-# - Keep UnitRaw from sheet.
+# hmc_mapper.py
+# Hyundai Motor Company – ESG metric extractor.
+# Source: hmc_source.xlsx (LlamaParse output, page-named sheets)
+# Years: 2022–2024. Intensity/per-vehicle rows excluded.
 
 import re
 import pandas as pd

@@ -1,33 +1,17 @@
 """
 run_all.py
 ----------
-ESG ETL pipeline with two modes:
+Combines per-company ESG core files into a single fact_esg_core.csv for Power BI.
 
-  combine (default)
-    Auto-detects all *_core.xlsx files in the current directory, reads them,
-    deduplicates, sorts, and exports to a single fact_esg_core.csv.
+Modes:
+  combine (default) – reads *_core.xlsx files and merges them
+  extract           – runs company mappers from LlamaParse source Excel files
 
-  extract
-    Runs the raw company mappers against the original structured Excel files
-    (page-named sheets produced by LlamaParse extraction) and then combines.
-    Requires the full source Excel files.
-
-Usage examples
---------------
-  # Combine already-processed core files (default):
+Usage:
   python run_all.py
-
-  # Explicit mode:
-  python run_all.py --mode combine
-
-  # Run full extraction from LlamaParse source Excel files:
   python run_all.py --mode extract
-
-  # Skip companies:
   python run_all.py --mode extract --skip ILJIN,SKODA
-
-  # Custom output path:
-  python run_all.py --out results/fact_esg_core.csv
+  python run_all.py --out path/to/output.csv
 """
 
 import argparse

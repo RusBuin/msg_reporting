@@ -1,28 +1,8 @@
-# sungwoo_mapper_core.py
-# SUNGWOO HITECH ESG - CORE metric extractor from sungwoo.xlsx (v2)
-#
-# Output columns:
-# Company, Year, MetricCode, Value, UnitRaw, MetricRaw, SourceSheet
-#
-# CORE metrics (aligned to your canonical naming):
-# - ENERGY_TOTAL (MWh): Energy_consumption(MWh) -> RESULT
-# - WATER_TOTAL (m3): Total_water_consumption(m3) -> RESULT
-# - WASTE_TOTAL (t): General_waste_production(t) -> RESULT
-# - WASTE_RECYCLED (t): Separated waste production(t) -> RESULT
-# - WASTE_HAZARDOUS (t): Dangerous waste production(t) -> RESULT
-# - EMPLOYEES_TOTAL / EMPLOYEES_MALE / EMPLOYEES_FEMALE: Page 8 - D
-# - GHG_SCOPE1 / GHG_SCOPE2 / GHG_SCOPE3: Page 7 - A
-# - GHG_TOTAL: derived = Scope1 + Scope2
-# - GHG_TOTAL_ALL: TOTAL row (as reported, includes Scope 3)
-#
-# Additional H&S metrics available in the source (optional but extracted):
-# - HNS_WORK_INJURIES_WITH_ABSENCE (Number): Page 10 - B
-# - HNS_MISSED_HOURS_DUE_TO_INJURY (Hours): Page 10 - B
-# - HNS_OCCUPATIONAL_DISEASE (Number): Page 10 - B
-# - HNS_TRAINING_CONDUCTED (Number): Page 10 - B
-#
-# Year policy:
-# - Extract only years 2022-2024 to match the rest of your dataset.
+# sungwoo_mapper.py
+# SUNGWOO HITECH – ESG metric extractor.
+# Source: sungwoo_source.xlsx (LlamaParse output, page-named sheets)
+# Years: 2022–2024.
+# Note: H&S table (Page 10 - B) is transposed – years are rows, indicators are columns.
 
 import re
 import pandas as pd

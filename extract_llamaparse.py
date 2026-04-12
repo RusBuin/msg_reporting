@@ -1,45 +1,22 @@
 """
 extract_llamaparse.py
 ---------------------
-Extracts structured tables from PDF sustainability reports using the
-LlamaParse API (https://docs.llamaindex.ai/en/stable/llama_cloud/llama_parse/).
+Extracts tables from selected pages of a PDF report using LlamaParse
+and saves the result as a multi-sheet Excel workbook.
 
-LlamaParse was chosen over standard text/geometry-based PDF parsers because
-ESG reports contain complex tables with merged cells, multi-level headers, and
-no explicit grid lines.  LlamaParse uses AI to reconstruct table structure
-from the full page layout context, which is essential for accurate extraction.
+Each sheet is named "Page {N} - A" to match the naming convention
+expected by the company mapper scripts.
 
-Workflow
---------
-1. Manually identify which pages in the source PDF contain ESG data tables.
-2. Run this script for the selected pages of each company's PDF report.
-3. The output is a multi-sheet Excel workbook where each sheet corresponds to
-   one page of the original document (e.g. page 69 → sheet "Page 69 - A").
-4. Pass the generated Excel file to the company mapper (mappers/*_mapper.py).
-
-Usage
------
-  python extract_llamaparse.py --pdf pdfs/audi-report-2024.pdf \\
-      --pages 77,80,106,107,113,114,118 \\
-      --out audi_source.xlsx \\
-      --api-key YOUR_LLAMA_CLOUD_API_KEY
-
-  # API key can also be set as an environment variable:
+Usage:
   export LLAMA_CLOUD_API_KEY=llx-...
+  python extract_llamaparse.py --pdf pdfs/audi-report-2024.pdf \\
+      --pages 77,80,106,107,113,114,118 --out audi_source.xlsx
+
   python extract_llamaparse.py --pdf pdfs/hmc-2025-sustainability-report-en.pdf \\
       --pages 115,116,119,124 --out hmc_source.xlsx
 
-Requirements
-------------
-  pip install llama-parse pandas openpyxl nest_asyncio
-
-Notes
------
-- A free LlamaParse account allows a limited number of pages per day.
-  Sending only the relevant pages (not the entire document) maximises
-  efficiency and stays within free-tier limits.
-- The script uses async programming so that waiting for the remote API
-  response does not block local execution.
+Only the pages that actually contain ESG tables are sent to the API –
+this keeps processing within the free-tier page limit.
 """
 
 import argparse
@@ -66,13 +43,7 @@ def _get_api_key(cli_key: Optional[str]) -> str:
 
 
 async def _extract_pages_async(pdf_path: str, pages: List[int], api_key: str) -> List[Dict]:
-    """
-    Send selected pages of a PDF to the LlamaParse API and return the
-    extracted content as a list of dicts  {page: int, markdown: str}.
-
-    Each page is sent in a separate async task so that network latency for
-    one page does not block the processing of others.
-    """
+    """Send selected pages to LlamaParse API; each page is processed as a separate async task."""
     from llama_parse import LlamaParse
 
     parser = LlamaParse(
@@ -93,11 +64,7 @@ async def _extract_pages_async(pdf_path: str, pages: List[int], api_key: str) ->
 
 
 def _markdown_to_dataframe(md: str) -> pd.DataFrame:
-    """
-    Convert a Markdown table string to a pandas DataFrame.
-    If the Markdown contains multiple tables, each is parsed separately
-    and they are concatenated vertically.
-    """
+    """Parse all Markdown tables in a string and concatenate them into one DataFrame."""
     lines = md.strip().splitlines()
     table_lines: List[str] = []
     frames: List[pd.DataFrame] = []
@@ -136,13 +103,7 @@ def _parse_md_table(lines: List[str]) -> pd.DataFrame:
 
 
 def extract_to_excel(pdf_path: str, pages: List[int], out_path: str, api_key: str) -> None:
-    """
-    Main extraction function: fetches the specified pages via LlamaParse,
-    converts each page's Markdown output to a DataFrame, and writes all
-    DataFrames to a multi-sheet Excel workbook.
-
-    Sheet naming convention: "Page {N} - A" (matches the mapper scripts).
-    """
+    """Fetch pages via LlamaParse and write each page as a sheet in an Excel workbook."""
     print(f"Extracting {len(pages)} pages from {pdf_path} ...")
     results = asyncio.run(_extract_pages_async(pdf_path, pages, api_key))
 

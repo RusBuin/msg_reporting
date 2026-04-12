@@ -1,24 +1,9 @@
-# skoda_mapper_core.py
-# SKODA Group ESG Report 2024 - CORE metric extractor (updated rules)
-#
-# Canonical output:
-# Company, Year, MetricCode, Value, UnitRaw, MetricRaw, SourceSheet
-#
-# CORE includes:
-# - ENERGY_TOTAL: Total energy consumption related to own operations (MWh)
-# - ENERGY_RENEWABLE: Total energy consumption from renewable sources (MWh)
-# - WATER_TOTAL: Total water consumption within the production (m3)
-# - WASTE_TOTAL: The total amount of waste generated (t)
-# - GHG_SCOPE1: Scope 1 emissions (t CO2e)
-# - GHG_SCOPE2: Scope 2 emissions (market-based) (t CO2e)
-# - GHG_SCOPE3_UPSTREAM: Scope 3 – Upstream (t CO2e)
-# - GHG_SCOPE3_DOWNSTREAM: Scope 3 – Downstream (t CO2e)
-# - GHG_TOTAL: Derived = GHG_SCOPE1 + GHG_SCOPE2 (t CO2e)
-# - EMPLOYEES_TOTAL / EMPLOYEES_FEMALE / EMPLOYEES_MALE (Number)
-#
-# Notes:
-# - “Total GHG emissions” row in the report typically includes Scope 3 -> NOT used in core.
-# - This workbook is mostly a 2024 snapshot.
+# skoda_mapper.py
+# ŠKODA Auto – ESG metric extractor.
+# Source: skoda_source.xlsx (LlamaParse output, page-named sheets)
+# Year: 2024 only (single-year snapshot in the source report).
+# Note: “Total GHG emissions” in the report includes Scope 3 – not used here;
+#       GHG_TOTAL is derived as Scope 1 + Scope 2 (market-based).
 
 import re
 import pandas as pd
