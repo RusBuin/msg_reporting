@@ -1,14 +1,14 @@
-# audi_mapper_core.py
-# AUDI mapper (rules/keywords based) for CORE ESG metrics.
-# User constraints:
-# - ENERGY_TOTAL: do NOT take "specific"
-# - GHG_TOTAL (Scope 1+2): do NOT take "specific"
-# - WASTE_TOTAL must be ONLY "Total amount of waste" (not production-specific, not total waste)
-# - Add WATER_TOTAL, WASTE_RECYCLED, WASTE_DISPOSAL
-# - Add GHG_SCOPE1 if present
+# audi_mapper.py
+# AUDI AG – rules/keywords-based extractor for CORE ESG metrics.
 #
-# Note: With this strict WASTE_TOTAL definition, AUDI 2022/2023 may be missing WASTE_TOTAL
-# if the report (your excel) doesn't contain "Total amount of waste" for those years.
+# Extraction rules applied:
+# - ENERGY_TOTAL : absolute total only, "specific" rows excluded
+# - GHG_TOTAL    : Scope 1 + 2 combined, "specific" rows excluded
+# - WASTE_TOTAL  : strictly "Total amount of waste" row only
+# - WATER_TOTAL, WASTE_RECYCLED, WASTE_DISPOSAL, GHG_SCOPE1 also extracted
+#
+# Note: WASTE_TOTAL for 2022/2023 may be absent if the source Excel does not
+# contain a "Total amount of waste" row for those years.
 
 import re
 import pandas as pd

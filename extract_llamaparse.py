@@ -46,6 +46,7 @@ import argparse
 import asyncio
 import os
 import sys
+from typing import Dict, List, Optional
 
 import nest_asyncio
 import pandas as pd
@@ -53,7 +54,7 @@ import pandas as pd
 nest_asyncio.apply()
 
 
-def _get_api_key(cli_key: str | None) -> str:
+def _get_api_key(cli_key: Optional[str]) -> str:
     key = cli_key or os.environ.get("LLAMA_CLOUD_API_KEY", "")
     if not key:
         print(
@@ -64,7 +65,7 @@ def _get_api_key(cli_key: str | None) -> str:
     return key
 
 
-async def _extract_pages_async(pdf_path: str, pages: list[int], api_key: str) -> list[dict]:
+async def _extract_pages_async(pdf_path: str, pages: List[int], api_key: str) -> List[Dict]:
     """
     Send selected pages of a PDF to the LlamaParse API and return the
     extracted content as a list of dicts  {page: int, markdown: str}.
@@ -98,8 +99,8 @@ def _markdown_to_dataframe(md: str) -> pd.DataFrame:
     and they are concatenated vertically.
     """
     lines = md.strip().splitlines()
-    table_lines: list[str] = []
-    frames: list[pd.DataFrame] = []
+    table_lines: List[str] = []
+    frames: List[pd.DataFrame] = []
 
     for line in lines:
         if line.startswith("|"):
@@ -115,10 +116,11 @@ def _markdown_to_dataframe(md: str) -> pd.DataFrame:
     return pd.concat(frames, ignore_index=True) if frames else pd.DataFrame()
 
 
-def _parse_md_table(lines: list[str]) -> pd.DataFrame:
+def _parse_md_table(lines: List[str]) -> pd.DataFrame:
     """Parse a single Markdown table (list of | … | lines) into a DataFrame."""
-    # Filter out separator rows (--|--|--)
-    data_lines = [l for l in lines if not set(l.replace("|", "").replace("-", "").replace(" ", "")) == set()]
+    # Filter out separator rows (---|---|---)
+    data_lines = [row for row in lines
+                  if set(row.replace("|", "").replace("-", "").replace(" ", "")) != set()]
     if not data_lines:
         return pd.DataFrame()
 
@@ -133,7 +135,7 @@ def _parse_md_table(lines: list[str]) -> pd.DataFrame:
     return df
 
 
-def extract_to_excel(pdf_path: str, pages: list[int], out_path: str, api_key: str) -> None:
+def extract_to_excel(pdf_path: str, pages: List[int], out_path: str, api_key: str) -> None:
     """
     Main extraction function: fetches the specified pages via LlamaParse,
     converts each page's Markdown output to a DataFrame, and writes all
