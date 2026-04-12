@@ -2,8 +2,6 @@
 __pycache__/
 *.py[cod]
 *.pyo
-*.pyd
-.Python
 *.egg-info/
 dist/
 build/
@@ -11,35 +9,26 @@ build/
 .venv
 venv/
 
-# Jupyter
-.ipynb_checkpoints/
-
 # OS
 .DS_Store
 Thumbs.db
 desktop.ini
 
-# Large binary files – raw source data (not tracked in git)
-pdfs/
-*.pbix
+# IDE
+.vscode/
+.idea/
 
-# Intermediate per-company Excel files (generated data)
-audi_core.xlsx
-hmc_core.xlsx
-iljin_core.xlsx
-skoda_core.xlsx
-sungwoo_core.xlsx
-audi_core.csv
-hmc_core.csv
-iljin_core.csv
-skoda_core.csv
-sungwoo_core.csv
+# Power BI binary (large)
+*.pbix
 
 # Extracted text files (generated)
 esg_extracted.txt
 *_extracted.txt
 *_text.txt
 
-# IDE
-.vscode/
-.idea/
+# Per-company CSV duplicates (xlsx versions kept in data/processed/)
+audi_core.csv
+hmc_core.csv
+iljin_core.csv
+skoda_core.csv
+sungwoo_core.csv

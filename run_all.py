@@ -25,12 +25,15 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 # ---------------------------------------------------------------------------
 # Company registry (used in extract mode)
 # ---------------------------------------------------------------------------
+PROCESSED_DIR = os.path.join("data", "processed")
+SOURCE_DIR    = os.path.join("data", "source")
+
 COMPANIES = {
-    "AUDI":    {"core": "audi_core.xlsx",    "source_default": "audi_source.xlsx"},
-    "HMC":     {"core": "hmc_core.xlsx",     "source_default": "hmc_source.xlsx"},
-    "ILJIN":   {"core": "iljin_core.xlsx",   "source_default": "iljin_source.xlsx"},
-    "SKODA":   {"core": "skoda_core.xlsx",   "source_default": "skoda_source.xlsx"},
-    "SUNGWOO": {"core": "sungwoo_core.xlsx", "source_default": "sungwoo_source.xlsx"},
+    "AUDI":    {"core": os.path.join(PROCESSED_DIR, "audi_core.xlsx"),    "source_default": os.path.join(SOURCE_DIR, "audi_source.xlsx")},
+    "HMC":     {"core": os.path.join(PROCESSED_DIR, "hmc_core.xlsx"),     "source_default": os.path.join(SOURCE_DIR, "hmc_source.xlsx")},
+    "ILJIN":   {"core": os.path.join(PROCESSED_DIR, "iljin_core.xlsx"),   "source_default": os.path.join(SOURCE_DIR, "iljin_source.xlsx")},
+    "SKODA":   {"core": os.path.join(PROCESSED_DIR, "skoda_core.xlsx"),   "source_default": os.path.join(SOURCE_DIR, "skoda_source.xlsx")},
+    "SUNGWOO": {"core": os.path.join(PROCESSED_DIR, "sungwoo_core.xlsx"), "source_default": os.path.join(SOURCE_DIR, "sungwoo_source.xlsx")},
 }
 
 DEFAULT_OUT = os.path.join("ESG_PowerBI", "drop", "fact_esg_core.csv")
@@ -75,8 +78,8 @@ def dedup_fact(df: pd.DataFrame) -> pd.DataFrame:
 # Mode 1: combine pre-processed *_core.xlsx files
 # ---------------------------------------------------------------------------
 def run_combine(skip: set, out_path: str) -> pd.DataFrame:
-    """Auto-detect *_core.xlsx files and merge them into one fact table."""
-    core_files = sorted(glob.glob("*_core.xlsx"))
+    """Auto-detect *_core.xlsx files in data/processed/ and merge them into one fact table."""
+    core_files = sorted(glob.glob(os.path.join(PROCESSED_DIR, "*_core.xlsx")))
     if not core_files:
         print("  No *_core.xlsx files found in the current directory.")
         return pd.DataFrame()
@@ -84,7 +87,7 @@ def run_combine(skip: set, out_path: str) -> pd.DataFrame:
     frames = []
 
     for f in core_files:
-        company_name = os.path.splitext(f)[0].replace("_core", "").upper()
+        company_name = os.path.splitext(os.path.basename(f))[0].replace("_core", "").upper()
         if company_name in skip:
             print(f"  [SKIP] {company_name}")
             continue

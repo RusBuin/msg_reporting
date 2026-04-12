@@ -1,4 +1,4 @@
-Company,Year,MetricCode,Value,UnitRaw,MetricRaw,SourceSheet,Pillar
+﻿Company,Year,MetricCode,Value,UnitRaw,MetricRaw,SourceSheet,Pillar
 AUDI,2022,ENERGY_TOTAL,3416092.0,MWh,Total energy consumption4,Page 80 - A,E
 AUDI,2022,GHG_TOTAL,734438.0,t CO₂e,Total GHG emissions (Scope 1 and 2)14,Page 80 - A,E
 AUDI,2023,ENERGY_TOTAL,3549439.0,MWh,Total energy consumption4,Page 80 - A,E
@@ -10,6 +10,7 @@ AUDI,2024,EMP_TURNOVER,2760.0,Number,Turnover,Page 114 - A,S
 AUDI,2024,ENERGY_RENEWABLE,2062797.98,MWh,Total energy consumption<br/>of which from renewable energy sources,Page 107 - A,E
 AUDI,2024,ENERGY_TOTAL,3246992.0,MWh,Total energy consumption4,Page 80 - A,E
 AUDI,2024,GHG_TOTAL,628425.0,t CO₂e,Total GHG emissions (Scope 1 and 2)14,Page 80 - A,E
+AUDI,2024,G_REPORTS_RECEIVED,907.0,Cases,Reports of possible regulatory violations (whistleblowing),Page 149 - reports of possible regulatory violations (2024),G
 AUDI,2024,HNS_TRIR,10.5,Events/<br/>million h,Rate of work-related accidents<br/>for own workforce (TRIR),Page 118 - A,S
 AUDI,2024,WASTE_TOTAL,421739.47,t,Total amount of waste,Page 107 - A,E
 AUDI,2024,WATER_TOTAL,1220561.3,m³,Total water consumption⁶,Page 107 - A,E
@@ -22,6 +23,7 @@ HMC,2022,GHG_SCOPE2,1684120.0,tCO₂-eq,Scope 2,Page 115 - B,E
 HMC,2022,GHG_SCOPE3,137935453.0,tCO₂-eq,Scope 3,Page 115 - B,E
 HMC,2022,GHG_TOTAL,2404069.0,tCO₂-eq,Sum of Scope 1 and 2,Page 115 - B,E
 HMC,2022,GHG_TOTAL_ALL,140339522.0,tCO2-eq,Derived: Scope1 + Scope2 + Scope3,Page 115 - B,E
+HMC,2022,HNS_TRIR,,Number of cases/20k working hours,Employee TRIR,Page 124 - A,S
 HMC,2022,WASTE_RECYCLED,578957.0,Ton,Amount of waste recycling,Page 116 - D,E
 HMC,2022,WASTE_TOTAL,649173.0,Ton,Total,Page 116 - D,E
 HMC,2022,WATER_TOTAL,10578611.0,Ton,Water consumption,Page 116 - B,E
@@ -47,6 +49,7 @@ HMC,2024,GHG_SCOPE2,1417987.0,tCO₂-eq,Scope 2,Page 115 - B,E
 HMC,2024,GHG_SCOPE3,147253154.0,tCO₂-eq,Scope 3,Page 115 - B,E
 HMC,2024,GHG_TOTAL,2097809.0,tCO₂-eq,Sum of Scope 1 and 2,Page 115 - B,E
 HMC,2024,GHG_TOTAL_ALL,149350963.0,tCO2-eq,Derived: Scope1 + Scope2 + Scope3,Page 115 - B,E
+HMC,2024,G_REPORTS_RECEIVED,50.0,Cases,Number of grievances received (Employee Grievances in 2024),Page 58 - Employee Grievances in 2024,G
 HMC,2024,HNS_TRIR,1.79,Number of cases/20k working hours,Employee TRIR,Page 124 - A,S
 HMC,2024,WASTE_RECYCLED,849485.0,Ton,Amount of waste recycling,Page 116 - D,E
 HMC,2024,WASTE_TOTAL,929013.0,Ton,Total,Page 116 - D,E
@@ -78,6 +81,7 @@ ILJIN,2024,FLUCTUATION_RATIO,0.61,%,Fluctuation ratio,Page 69 - H,S
 ILJIN,2024,GHG_SCOPE1,65.94,t CO2e,Direct CO2 emissions (Scope 1) in millions of metric tons of CO2,Page 49 - B,E
 ILJIN,2024,GHG_SCOPE2,603.72,t CO2e,Indirect CO2 emissions (Scope 2) in millions of metric tons of CO2,Page 49 - B,E
 ILJIN,2024,GHG_TOTAL,669.66,t CO2e,Total own CO2 emissions (Scopes 1 and 2) in millions of metric tons of CO2,Page 49 - B,E
+ILJIN,2024,G_REPORTS_RECEIVED,,Cases,Whistleblowing / reporting channel described (number of reports not disclosed),Page 31 - Whistleblowing procedure (no number disclosed),G
 ILJIN,2024,SICKNESS_RATIO,3.43,%,Sickness ratio %,Page 69 - G,S
 ILJIN,2024,WATER_TOTAL,4119.0,m3,Water usage (Waterworks (Unit: m3,Page 69 - B,E
 SKODA,2024,EMPLOYEES_FEMALE,1595.0,Number,Female employees,Page 63 - A,S
@@ -91,6 +95,7 @@ SKODA,2024,GHG_SCOPE3_DOWNSTREAM,3542145.0,t CO2e,Scope 3 – Downstream,Page 62
 SKODA,2024,GHG_SCOPE3_UPSTREAM,267664.0,t CO2e,Scope 3 – Upstream,Page 62 - C,E
 SKODA,2024,GHG_TOTAL,33880.0,t CO2e,Derived: GHG_SCOPE1 + GHG_SCOPE2 (market-based),Page 62 - C,E
 SKODA,2024,GHG_TOTAL_ALL,3843689.0,t CO2e,Total GHG emissions,Page 62 - C,E
+SKODA,2024,G_REPORTS_RECEIVED,7.0,Cases,TrustLine reports received (Out of the seven reports...),Page 44 - TrustLine (Out of the seven reports...),G
 SKODA,2024,WASTE_TOTAL,133293.0,t,The total amount of waste generated,Page 62 - F,E
 SKODA,2024,WATER_TOTAL,30011.0,m3,Total water consumption within the production,Page 62 - E,E
 SUNGWOO,2022,EMPLOYEES_FEMALE,433.0,Number,FEMALE,Page 8 - D,S
@@ -128,13 +133,9 @@ SUNGWOO,2024,GHG_SCOPE2,21085.0,t CO2e,SCOPE 2,Page 7 - A,E
 SUNGWOO,2024,GHG_SCOPE3,12841.0,t CO2e,SCOPE 3,Page 7 - A,E
 SUNGWOO,2024,GHG_TOTAL,23977.0,t CO2e,Derived: GHG_SCOPE1 + GHG_SCOPE2,Page 7 - A,E
 SUNGWOO,2024,GHG_TOTAL_ALL,36818.0,t CO2e,TOTAL (as reported),Page 7 - A,E
+SUNGWOO,2024,G_REPORTS_RECEIVED,10.0,Cases,Received grievances (grievance management),Page 12 - Received grievances,G
+SUNGWOO,2024,G_WHISTLEBLOWING_REPORTS_RECEIVED,3.0,Cases,Whistleblowing reports (count),Page 13 - WHISTLEBLOWING (2024),G
 SUNGWOO,2024,WASTE_HAZARDOUS,171.51,t,Dangerous waste production(t) RESULT,Dangerous waste production(t),E
 SUNGWOO,2024,WASTE_RECYCLED,65027.0,t,Separated waste production(t) RESULT,Separated waste production(t),E
 SUNGWOO,2024,WASTE_TOTAL,65561.0,t,General_waste_production(t) RESULT,General_waste_production(t),E
 SUNGWOO,2024,WATER_TOTAL,34846.0,m3,Total_water_consumption(m3) RESULT,Total_water_consumption(m3),E
-HMC,2024,G_REPORTS_RECEIVED,50.0,Cases,Number of grievances received (Employee Grievances in 2024),Page 58 - Employee Grievances in 2024,G
-AUDI,2024,G_REPORTS_RECEIVED,907.0,Cases,Reports of possible regulatory violations (whistleblowing),Page 149 - reports of possible regulatory violations (2024),G
-SKODA,2024,G_REPORTS_RECEIVED,7.0,Cases,TrustLine reports received (Out of the seven reports...),Page 44 - TrustLine (Out of the seven reports...),G
-ILJIN,2024,G_REPORTS_RECEIVED,,Cases,Whistleblowing / reporting channel described (number of reports not disclosed),Page 31 - Whistleblowing procedure (no number disclosed),G
-SUNGWOO,2024,G_REPORTS_RECEIVED,10.0,Cases,Received grievances (grievance management),Page 12 - Received grievances,G
-SUNGWOO,2024,G_WHISTLEBLOWING_REPORTS_RECEIVED,3.0,Cases,Whistleblowing reports (count),Page 13 - WHISTLEBLOWING (2024),G
