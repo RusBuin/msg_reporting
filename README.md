@@ -9,6 +9,15 @@ Bachelor's thesis project: an ETL pipeline for collecting and analysing ESG metr
 ```
 esg-analysis-powerbi/
 │
+├── pdfs/                         # Source ESG reports (PDF)
+├── data/
+│   ├── source/                   # LlamaParse Excel outputs (page-named sheets)
+│   └── processed/                # Mapper outputs (*_core.xlsx, one per company)
+│
+├── ESG_PowerBI/
+│   └── drop/
+│       └── fact_esg_core.csv     # Final consolidated dataset for Power BI
+│
 ├── mappers/                      # Company-specific metric extractor modules
 │   ├── __init__.py
 │   ├── audi_mapper.py            # AUDI AG
@@ -17,18 +26,10 @@ esg-analysis-powerbi/
 │   ├── skoda_mapper.py           # ŠKODA Auto
 │   └── sungwoo_mapper.py         # SUNGWOO HITECH
 │
-├── pdfs/                         # Source ESG reports in PDF format (not tracked in git)
-│
-├── ESG_PowerBI/
-│   └── drop/
-│       ├── fact_esg_core.csv     # Final dataset for Power BI
-│       └── config.csv            # Dashboard mode config (single / compare)
-│
-├── extract_llamaparse.py         # AI-powered PDF table extraction via LlamaParse
-├── extract_pdf.py                # Basic PDF text extraction (pypdf fallback)
-├── read_docx.py                  # CLI tool: extract text from Word documents
-├── run_all.py                    # Main ETL script: combine or extract all companies
-├── powerquery_fact_template.m    # Power Query M template for Power BI
+├── extract_llamaparse.py         # PDF table extraction via LlamaParse API
+├── extract_pdf.py                # Basic PDF text extraction (pypdf)
+├── read_docx.py                  # Text extraction from Word documents
+├── run_all.py                    # Main ETL script
 ├── requirements.txt
 └── README.md
 ```
@@ -69,15 +70,15 @@ esg-analysis-powerbi/
 ## Pipeline Overview
 
 ```
-PDF reports  ──►  extract_llamaparse.py  ──►  *_source.xlsx  (page-named sheets)
-                                                     │
-                                               mappers/*.py
-                                                     │
-                                              *_core.xlsx  (one per company)
-                                                     │
-                                               run_all.py
-                                                     │
-                                         fact_esg_core.csv  ──►  Power BI
+PDF reports  ──►  extract_llamaparse.py  ──►  data/source/*_source.xlsx
+                                                       │
+                                                 mappers/*.py
+                                                       │
+                                           data/processed/*_core.xlsx
+                                                       │
+                                                  run_all.py
+                                                       │
+                                        fact_esg_core.csv  ──►  Power BI
 ```
 
 ---
@@ -103,45 +104,34 @@ export LLAMA_CLOUD_API_KEY=llx-...
 python extract_llamaparse.py \
     --pdf pdfs/audi-report-2024.pdf \
     --pages 77,80,106,107,113,114,118 \
-    --out audi_source.xlsx
+    --out data/source/audi_source.xlsx
 
 python extract_llamaparse.py \
     --pdf pdfs/hmc-2025-sustainability-report-en.pdf \
     --pages 115,116,119,124 \
-    --out hmc_source.xlsx
+    --out data/source/hmc_source.xlsx
 ```
 
 ### 3. Run the ETL pipeline
 
 ```bash
-# Run all mappers (expects *_core.xlsx files in the project folder):
+# Combine pre-processed core files (default):
 python run_all.py
 
-# Specify custom file paths:
-python run_all.py --audi path/to/audi.xlsx --hmc path/to/hmc.xlsx
+# Run full extraction from source Excel files:
+python run_all.py --mode extract
 
-# Skip companies whose Excel files are not available:
-python run_all.py --skip ILJIN,SKODA
+# Skip specific companies:
+python run_all.py --mode extract --skip ILJIN,SKODA
 ```
 
 Output is saved to `ESG_PowerBI/drop/fact_esg_core.csv`.
 
-### 3. Extract text from PDF
-
-```bash
-python extract_pdf.py pdfs/audi-report-2024.pdf
-python extract_pdf.py pdfs/hmc-2025-sustainability-report-en.pdf output.txt
-```
-
 ### 4. Connect to Power BI
 
-1. Open Power BI Desktop → **Get Data → Blank Query → Advanced Editor**
-2. Paste the contents of `powerquery_fact_template.m`
-3. Update the `SourcePath` variable to point to your `fact_esg_core.csv`
-4. Click **Close & Apply**
-5. Build visuals using columns: `Company`, `Year`, `MetricCode`, `Value`, `Pillar`
-
-After refreshing the dataset, just click **Refresh** in Power BI to update all visuals.
+1. Open Power BI Desktop → **Get Data → Text/CSV**
+2. Select `ESG_PowerBI/drop/fact_esg_core.csv`
+3. Build visuals using columns: `Company`, `Year`, `MetricCode`, `Value`, `Pillar`
 
 ---
 
@@ -162,6 +152,5 @@ After refreshing the dataset, just click **Refresh** in Power BI to update all v
 
 ## Tech Stack
 
-- **Python 3.10+** — pandas, openpyxl, pypdf
+- **Python 3.10+** — pandas, openpyxl, pypdf, llama-parse
 - **Microsoft Power BI Desktop** — dashboard and visualisations
-- **Power Query (M)** — data connection and type casting
